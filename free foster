@@ -1,0 +1,47 @@
+// ==UserScript==
+// @name         free foster
+// @namespace    http://violentmonkey.net/
+// @version      1.0
+// @description  Automatically clicks correct answers, #opt-0, and Submit dynamically
+// @match        *://*/*
+// @grant        none
+// @run-at       document-idle
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    function autoClick() {
+        // 1. Click correct answers inside .answers containers
+        const answersContainers = document.querySelectorAll('.answers');
+        answersContainers.forEach(container => {
+            const correctAnswers = container.querySelectorAll('.answer-option.correct');
+            correctAnswers.forEach(button => {
+                if (!button.dataset.clicked) {
+                    button.click();
+                    button.dataset.clicked = 'true';
+                }
+            });
+        });
+
+        // 2. Click #opt-0 inside .SSMC.multiple-choice-group
+        const mcContainers = document.querySelectorAll('.SSMC.multiple-choice-group[role="radiogroup"]');
+        mcContainers.forEach(container => {
+            const button = container.querySelector('button#opt-0.multiple-choice-option');
+            if (button && !button.dataset.clicked) {
+                button.click();
+                button.dataset.clicked = 'true';
+            }
+        });
+
+        // 3. Click Submit button inside .action-buttons
+        const submitContainers = document.querySelectorAll('.action-buttons');
+        submitContainers.forEach(container => {
+            const submitButton = container.querySelector('button.button.primary');
+            if (submitButton) submitButton.click();
+        });
+    }
+
+    // Run every 500ms to handle dynamically loaded content
+    setInterval(autoClick, 500);
+})();
