@@ -22,17 +22,7 @@
                     button.dataset.clicked = 'true';
                 }
             });
-        });
-
-        // 2. Click #opt-0 inside .SSMC.multiple-choice-group
-        const mcContainers = document.querySelectorAll('.SSMC.multiple-choice-group[role="radiogroup"]');
-        mcContainers.forEach(container => {
-            const button = container.querySelector('button#opt-0.multiple-choice-option');
-            if (button && !button.dataset.clicked) {
-                button.click();
-                button.dataset.clicked = 'true';
-            }
-        });
+        }); // <-- This closes the .answers forEach loop properly
 
         // 3. Click Submit button inside .action-buttons
         const submitContainers = document.querySelectorAll('.action-buttons');
