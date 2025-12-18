@@ -1,0 +1,113 @@
+// ==UserScript==
+// @name         free-fosterV3 beta
+// @version      2.0
+// @description  Automates quiz answering via Gemini without the on-screen debug box.
+// @author       Gemini Logic
+// @match        *://*/*
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_deleteValue
+// @grant        GM_openInTab
+// @grant        GM_closeTab
+// @run-at       document-idle
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    const currentUrl = window.location.href;
+    const isGemini = currentUrl.includes("gemini.google.com");
+
+    // ==========================================
+    // SECTION 1: GEMINI TAB LOGIC
+    // ==========================================
+    if (isGemini) {
+        setInterval(() => {
+            const pendingPrompt = GM_getValue("pf_gemini_prompt");
+
+            if (pendingPrompt) {
+                const inputField = document.querySelector('div[role="textbox"][contenteditable="true"]');
+                if (inputField) {
+                    inputField.focus();
+                    inputField.innerText = pendingPrompt;
+                    inputField.dispatchEvent(new Event('input', { bubbles: true }));
+
+                    setTimeout(() => {
+                        const sendButton = document.querySelector('button[aria-label="Send message"]');
+                        if (sendButton && !sendButton.disabled) {
+                            sendButton.click();
+                            GM_deleteValue("pf_gemini_prompt");
+                        }
+                    }, 800);
+                }
+            }
+
+            const responses = document.querySelectorAll('.model-response-text');
+            if (responses.length > 0) {
+                const lastResponse = responses[responses.length - 1].innerText.trim();
+                if (lastResponse !== GM_getValue("pf_a") && !lastResponse.includes("Question:")) {
+                    GM_setValue("pf_a", lastResponse);
+                }
+            }
+        }, 1500);
+        return;
+    }
+
+    // ==========================================
+    // SECTION 2: QUIZ TAB LOGIC
+    // ==========================================
+    let lastQ = "";
+    let chatTabObject = null;
+
+    setInterval(() => {
+        const section = document.querySelector('.Shell .player .page-section.center[aria-hidden="false"]');
+        if (!section) return;
+
+        const qEl = section.querySelector('.page-group .question-section .question-text');
+        const currentQ = qEl ? qEl.innerText.trim() : '';
+        const aiAnswer = GM_getValue("pf_a");
+
+        // Detect New Question
+        if (currentQ && currentQ !== lastQ) {
+            lastQ = currentQ;
+            GM_deleteValue("pf_a");
+
+            const labels = section.querySelectorAll('.answer-section .SSMC.multiple-choice-group label');
+            let choices = "";
+            labels.forEach(lbl => { choices += lbl.innerText.trim() + "\n"; });
+
+            const finalPrompt = `Question:\n${currentQ}\n\nChoices:\n${choices}\n\nInstruction:\nReturn ONLY the exact text of the correct choice. No explanations.`;
+
+            GM_setValue("pf_gemini_prompt", finalPrompt);
+
+            if (!chatTabObject || chatTabObject.closed) {
+                chatTabObject = GM_openInTab("https://gemini.google.com/", { active: false, insert: true, setParent: true });
+            }
+        }
+
+        // Auto-Click Answer
+        if (aiAnswer) {
+            const labels = section.querySelectorAll('.answer-section .SSMC.multiple-choice-group label');
+            let found = false;
+
+            labels.forEach(lbl => {
+                const labelText = lbl.innerText.toLowerCase().trim();
+                const cleanAI = aiAnswer.toLowerCase().trim();
+
+                if (!found && (labelText === cleanAI || labelText.includes(cleanAI))) {
+                    lbl.click();
+                    found = true;
+
+                    GM_deleteValue("pf_a");
+
+                    if (chatTabObject) {
+                        setTimeout(() => {
+                            chatTabObject.close();
+                            chatTabObject = null;
+                        }, 1000);
+                    }
+                }
+            });
+        }
+    }, 1000);
+})();
