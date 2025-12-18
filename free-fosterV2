@@ -1,0 +1,63 @@
+// ==UserScript==
+// @name         free foster - Combined
+// @namespace    http://violentmonkey.net/
+// @version      1.2
+// @description  Combines auto-selection of correct answers, checked options, and #opt-0 with auto-submit.
+// @match        *://*/*
+// @grant        none
+// @run-at       document-idle
+// ==/UserScript==
+
+(function () {
+  'use strict';
+
+  function autoClick() {
+    // 1. Handle Explicit Correct Answers (from Script 2)
+    const answersContainers = document.querySelectorAll('.answers');
+    answersContainers.forEach(container => {
+      const correctAnswers = container.querySelectorAll('.answer-option.correct');
+      correctAnswers.forEach(button => {
+        if (!button.dataset.clicked) {
+          button.click();
+          button.dataset.clicked = 'true';
+        }
+      });
+    });
+
+    // 2. Handle Multiple Choice Groups (Merged Logic)
+    const groups = document.querySelectorAll('.SSMC.multiple-choice-group[role="radiogroup"]');
+    groups.forEach(group => {
+      // If we've already interacted with this group in this cycle, skip
+      if (group.dataset.done === 'true') return;
+
+      const checked = group.querySelector('[aria-checked="true"]');
+      const opt0 = group.querySelector('#opt-0.multiple-choice-option');
+      
+      let target = null;
+
+      // Priority: 1. Currently checked item | 2. Default opt-0
+      if (checked) {
+        target = checked;
+      } else if (opt0) {
+        target = opt0;
+      }
+
+      if (target && !target.dataset.clicked) {
+        target.click();
+        target.dataset.clicked = 'true';
+        group.dataset.done = 'true'; // Mark group as processed
+      }
+    });
+
+    // 3. Submit (Combined logic)
+    // Targets .action-buttons button.button.primary
+    const submitButtons = document.querySelectorAll('.action-buttons button.button.primary');
+    submitButtons.forEach(btn => {
+        // Simple click trigger
+        btn.click();
+    });
+  }
+
+  // Run every 500ms to handle dynamically loaded content
+  setInterval(autoClick, 500);
+})();
