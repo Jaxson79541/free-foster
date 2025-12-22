@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         free-fosterV3 beta
-// @version      2.0
-// @description  Automates quiz answering via Gemini without the on-screen debug box.
-// @author       Gemini Logic
+// @version      3.0
+// @description  Automates quiz answering via Gemini.
+// @author       oarity
 // @match        *://*/*
 // @grant        GM_setValue
 // @grant        GM_getValue
