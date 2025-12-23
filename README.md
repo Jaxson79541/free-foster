@@ -1,1 +1,1 @@
-please dont expect regular updates this works for me i suggest using violentmonkey for this script i just made to graduate quickly if you moddify my script to include test please contact me at abr9876565@gmail.com and i will add it with proper credits ofc
+to install the script on chrome download tampermonkey https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en&pli=1 then allow all permissions on the extensions page chrome://extensions/ then add the script and save and reload pennfoster
